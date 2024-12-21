@@ -1,4 +1,4 @@
-package CalcServer
+package calculation
 
 import (
 	"testing"
