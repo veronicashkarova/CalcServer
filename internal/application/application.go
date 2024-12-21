@@ -4,9 +4,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/veronicashkarova/CalcServer/pkg/calculation"
 	"net/http"
 	"os"
-	"github.com/veronicashkarova/CalcServer/pkg/calculation"
 )
 
 type Config struct {
@@ -47,12 +47,12 @@ func CalcHandler(w http.ResponseWriter, r *http.Request) {
 
 	result, err := calculation.Calc(request.Expression)
 	if err != nil {
-		if errors.Is(err, calculation.ErrInvalidExpression) {
+		switch {
+		case errors.Is(err, calculation.ErrInvalidExpression):
 			http.Error(w, err.Error(), http.StatusBadRequest)
-		} else {
-			fmt.Fprintf(w, "unknown err")
+		case errors.Is(err, calculation.ErrEmptyExpression):
+			http.Error(w, err.Error(), http.StatusUnprocessableEntity)
 		}
-
 	} else {
 		w.WriteHeader(http.StatusOK)
 		fmt.Fprintf(w, "result: %f", result)
@@ -61,5 +61,6 @@ func CalcHandler(w http.ResponseWriter, r *http.Request) {
 
 func (a *Application) RunServer() error {
 	http.HandleFunc("/", CalcHandler)
+	fmt.Println("Server started")
 	return http.ListenAndServe(":"+a.config.Addr, nil)
 }
